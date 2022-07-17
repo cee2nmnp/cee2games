@@ -21,18 +21,23 @@ server.listen(PORT, () => {
 io.on('connection', (socket) => {
 	console.log('user connected');
 
-	// 初回接続時にクライアントからくる、接続IDの要求に対する処理
-	socket.on('requestId', (message) => {
-		io.emit('responseId', socket.id);
-		console.log('新規接続開始。ソケットID： ', socket.id);
-	});
-
 	// 'sendMessage' というイベント名で受信できる
 	// 第一引数には受信したメッセージが入り、ログに出力する
 	socket.on('sendMessage', (message) => {
 		console.log('Message has been sent: ', message);
 		
 		// 'receiveMessage' というイベントを発火、受信したメッセージを全てのクライアントに対して送信する
-		io.emit('receiveMessage', message);
+		io.emit('receiveMessage', '[' + socket.id + '] ' + message);
+	});
+
+	// クライアントからの要求に応じてソケットIDを返却する
+	socket.on('requestId', (message) => {
+		var id = socket.id;
+		io.to(id).emit('responseId', id);
+	});
+	
+	// クライアントから送られてきた操作内容を全接続者に再送する
+	socket.on('sendStone', (message) => {
+		io.emit('receiveStone', message);
 	});
 });
